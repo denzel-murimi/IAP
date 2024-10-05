@@ -28,12 +28,13 @@
                             
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" required>
+                                <input type="password" name="password" id="password" class="form-control" required minlength="8" maxlength="16">
+                                <small class="form-text text-muted">Password must be between 8-16 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.</small>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="auth_code" class="form-label">2FA Code</label>
-                                <input type="text" name="auth_code" class="form-control" maxlength="6" required>
+                                <input type="text" name="auth_code" id="auth_code" class="form-control" required minlength="6" maxlength="6" pattern="\d{6}" title="2FA Code must be a 6-digit number.">
                             </div>
                             
                             <div class="d-grid">
