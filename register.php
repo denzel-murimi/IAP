@@ -1,59 +1,67 @@
 <?php
 require_once 'databaseConnect.php';
 require_once 'user.php';
+require 'src/Exception.php';
+require 'src/PHPMailer.php';
+require 'src/SMTP.php';
 
-
-function sanitize_input($data) {
-    return htmlspecialchars(strip_tags(trim($data)));
-}
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
     
-    $username = sanitize_input($_POST['username']);
-    $email = sanitize_input($_POST['email']);
-    $password = sanitize_input($_POST['password']);
-    $auth_code = sanitize_input($_POST['auth_code']);
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
 
-    
-    if (empty($username) || empty($email) || empty($password) || empty($auth_code)) {
+    if (empty($username) || empty($email) || empty($password)) {
         echo "Please fill in all fields.";
         exit;
     }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo "Invalid email format.";
+    $database = new Database();
+    $db = $database->getConnection();
+
+    $user = new User($db);
+    $user->username = $username;
+    $user->email = $email;
+
+    if ($user->userExists()) {
+        echo "User with this username or email already exists.";
         exit;
     }
 
-    if (strlen($auth_code) != 6 || !ctype_digit($auth_code)) {
-        echo "Invalid 2FA code.";
-        exit;
-    }
+    $user->password = $password;
 
-    
-    try {
-        $database = new Database();
-        $db = $database->getConnection();
+    if ($user->create()) {
+        
+        $auth_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        $_SESSION['2fa_code'] = $auth_code; 
+        $_SESSION['email'] = $email; 
 
-        $user = new User($db);
-        $user->username = $username;
-        $user->email = $email;
-        $user->password = $password;
-        $user->auth_code = $auth_code;
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'denzelerrands@gmail.com';
+        $mail->Password = 'gedo httf ewxx ridv'; 
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
 
-       
-        $result = $user->create();
+        $mail->setFrom('denzelerrands@gmail.com', 'Denzel Errands');
+        $mail->addAddress($email);
 
-        if ($result === true) {
-            echo "User registered successfully!";
-        } elseif ($result === "User already exists.") {
-            echo "User with the same username or email already exists.";
-        } else {
-            echo "User registration failed.";
+        $mail->isHTML(true);
+        $mail->Subject = 'Your 2FA Code';
+        $mail->Body = "Your 2FA code is: $auth_code";
+
+        try {
+            $mail->send();
+            header('Location:2fa.html'); 
+        } catch (Exception $e) {
+            echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
         }
-
-    } catch (Exception $e) {
-        echo "Error: " . $e->getMessage();
+    } else {
+        echo "User registration failed.";
     }
 }
+?>
