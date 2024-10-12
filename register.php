@@ -32,18 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $user->password = $password;
 
+    $auth_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    $user->auth_code = $auth_code; 
+
     if ($user->create()) {
         
-        $auth_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-        $_SESSION['2fa_code'] = $auth_code; 
-        $_SESSION['email'] = $email; 
-
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->SMTPDebug = 0;  
+
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
         $mail->Username = 'denzelerrands@gmail.com';
-        $mail->Password = 'gedo httf ewxx ridv'; 
+        $mail->Password = 'fderaecjljibswrz'; 
         $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
@@ -52,11 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $mail->isHTML(true);
         $mail->Subject = 'Your 2FA Code';
-        $mail->Body = "Your 2FA code is: $auth_code";
+        $mail->Body = "Your 2FA code is: {$user->auth_code}"; 
 
         try {
             $mail->send();
-            header('Location:2fa.html'); 
+            header('Location: 2fa.php'); 
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
         }
