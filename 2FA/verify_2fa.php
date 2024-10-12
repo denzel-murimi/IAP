@@ -1,5 +1,5 @@
 <?php
-require_once 'databaseConnect.php';
+require_once '../databaseConnect.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $auth_code = trim($_POST['auth_code']); 
