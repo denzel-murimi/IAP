@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         try {
             $mail->send();
-            header('Location: 2fa.php'); 
+            header('Location: /2FA/2fa.php'); 
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
         }
