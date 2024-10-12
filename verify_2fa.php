@@ -1,20 +1,37 @@
 <?php
-session_start();
+require_once 'databaseConnect.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user_input_code = trim($_POST['auth_code']);
+    $auth_code = trim($_POST['auth_code']); 
 
-    if (isset($_SESSION['2fa_code'])) {
-        if ($user_input_code === $_SESSION['2fa_code']) {
-            echo "2FA verification successful!";
-            unset($_SESSION['2fa_code']); 
-            unset($_SESSION['email']);
-            
-        } else {
-            echo "Invalid 2FA code. Please try again.";
-        }
+    if (empty($auth_code)) {
+        echo "Please fill in all fields.";
+        exit;
+    }
+
+    $database = new Database();
+    $db = $database->getConnection();
+
+    
+    error_log("Auth code received: '{$auth_code}'");
+
+    
+    $query = "SELECT * FROM users WHERE auth_code = :auth_code LIMIT 1";
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(':auth_code', $auth_code);
+    $stmt->execute();
+
+    if ($stmt->rowCount() > 0) {
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+       
+        error_log("User found. Auth code in database: '{$user['auth_code']}'");
+
+       
+        echo "2FA verification successful! You are now logged in.";
+        
     } else {
-        echo "No 2FA code was generated. Please try again.";
+        echo "Invalid 2FA code. Please try again."; 
     }
 }
 ?>
