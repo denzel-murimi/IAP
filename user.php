@@ -9,7 +9,6 @@ class User {
     public $password;
     public $auth_code;
 
-   
     public function __construct($db) {
         $this->conn = $db;
     }
@@ -31,52 +30,44 @@ class User {
        
         $stmt->execute();
 
-        
-        if ($stmt->rowCount() > 0) {
-            return true; // User exists
-        }
-
-        return false; 
+       
+        return $stmt->rowCount() > 0;
     }
 
     
     public function create() {
-       
         if ($this->userExists()) {
             return "User already exists."; 
         }
-
+    
+        
+        $this->auth_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT); // Generate a 6-digit code
         $query = "INSERT INTO " . $this->table_name . " 
                   SET username = :username, email = :email, password = :password, auth_code = :auth_code";
-
+    
         $stmt = $this->conn->prepare($query);
-
-       
+    
         $this->username = htmlspecialchars(strip_tags($this->username));
         $this->email = htmlspecialchars(strip_tags($this->email));
-        $this->auth_code = htmlspecialchars(strip_tags($this->auth_code));
-
-       
         $hashed_password = password_hash($this->password, PASSWORD_DEFAULT);
-
-        
+    
         $stmt->bindParam(":username", $this->username);
         $stmt->bindParam(":email", $this->email);
         $stmt->bindParam(":password", $hashed_password);
-        $stmt->bindParam(":auth_code", $this->auth_code);
-
+        $stmt->bindParam(":auth_code", $this->auth_code); 
+    
         try {
-            
             if ($stmt->execute()) {
                 return true;
             }
         } catch (PDOException $e) {
-            
             error_log("Database error: " . $e->getMessage());
         }
-
+    
         return false;
     }
+    
+    
 
     
     public function read() {
@@ -84,6 +75,7 @@ class User {
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
 
-        return $stmt;
+        return $stmt; 
     }
 }
+?>
